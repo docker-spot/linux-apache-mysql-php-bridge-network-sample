@@ -1,0 +1,49 @@
+version: '3.1'
+
+services:
+    laravel-php-apache:
+        build:
+            args:
+                container_project_path: /var/www/html/
+                uid: 1000
+                user: $USER
+            context: .
+            dockerfile: ./Dockerfile
+        image: laravel-php-apache
+        networks:
+            laravel:
+                ipv4_address: 172.16.0.2
+        volumes:
+            - ./workspace/:/var/www/html/
+
+    laravel-mysql:
+        image: mysql:8.0
+        command: --default-authentication-plugin=mysql_native_password
+        restart: always
+        environment:
+            MYSQL_ROOT_HOST: '%'
+            MYSQL_ROOT_PASSWORD: root
+        networks:
+            laravel:
+                ipv4_address: 172.16.0.3
+        volumes:
+            - ./.configs/mysql-data:/var/lib/mysql/
+
+    laravel-phpmyadmin:
+        image: phpmyadmin:latest
+        restart: always
+        environment:
+            PMA_HOST: laravel-mysql
+            PMA_USER: root
+            PMA_PASSWORD: root
+        networks:
+            laravel:
+                ipv4_address: 172.16.0.4
+
+networks:
+    laravel:
+        driver: bridge
+        ipam:
+            config:
+                - subnet: 172.16.0.0/24
+                  gateway: 172.16.0.1
